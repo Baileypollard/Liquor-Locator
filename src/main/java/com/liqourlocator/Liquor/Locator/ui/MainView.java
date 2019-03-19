@@ -1,5 +1,6 @@
 package com.liqourlocator.Liquor.Locator.ui;
 
+import com.couchbase.client.java.document.json.JsonObject;
 import com.liqourlocator.Liquor.Locator.model.Establishment;
 import com.liqourlocator.Liquor.Locator.model.EstablishmentType;
 import com.liqourlocator.Liquor.Locator.repository.EstablishmentRepository;
@@ -15,14 +16,18 @@ import com.vaadin.tapio.googlemaps.client.LatLon;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.vaadin.addons.searchbox.SearchBox;
 import org.vaadin.alump.labelbutton.LabelButton;
 import org.vaadin.alump.labelbutton.LabelButtonStyles;
 
 import javax.servlet.annotation.WebServlet;
+import javax.xml.ws.Response;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Theme("valo")
@@ -32,6 +37,7 @@ public class MainView extends UI
 {
     @Autowired
     private EstablishmentRepository establishmentRepository;
+
     @Autowired
     private EstablishmentTypeRepository establishmentTypeRepository;
 
@@ -124,11 +130,23 @@ public class MainView extends UI
             button.addClickListener(clickEvent ->
             {
                 Establishment clickedEstablishment = findClickedEstablishment(establishments, clickEvent.getButton().getCaption());
-                HorizontalLayout layout = createWindowUI(clickedEstablishment);
+                if (clickedEstablishment != null)
+                {
+                    Establishment newEstablishment = getEstablishmentInformation(clickedEstablishment);
 
-                CreateWindowWithLayout window = new CreateWindowWithLayout(layout);
-                window.setDraggable(true);
-                getUI().addWindow(window);
+                    HorizontalLayout layout = createWindowUI(newEstablishment);
+
+                    CreateWindowWithLayout window = new CreateWindowWithLayout(layout);
+                    window.setDraggable(true);
+
+                    getUI().getWindows().forEach(Window::close); //Close all current windows to prevent stacking
+
+                    getUI().addWindow(window);
+                }
+                else
+                {
+                    Notification.show("Could not find the selected establishment", Notification.Type.WARNING_MESSAGE);
+                }
             });
 
             panelLayout.addComponent(button);
@@ -152,17 +170,15 @@ public class MainView extends UI
         establishmentNameLabel.setStyleName(ValoTheme.LABEL_BOLD);
 
         Label establishmentAddress = new Label("Address: " + establishment.getStreetAddress());
-
         Label establishmentCity = new Label("City/Town: " + establishment.getCityTown());
-
-        Label establishmentRating = new Label("Average Rating: ");
-
+        Label establishmentProvince = new Label("Province: " + establishment.getProvince());
+        Label establishmentRating = new Label("Average Rating: " + establishment.getRating());
+        Label phoneNumber = new Label("Phone Number: " + establishment.getPhoneNumber());
         Label establishmentsNearBy = new Label("Total Establishments Nearby: ");
-
         Label otherNearBy = new Label("Other Bars Nearby: ");
 
-        leftLayout.addComponents(establishmentNameLabel, establishmentAddress, establishmentCity, establishmentRating
-        , establishmentsNearBy, otherNearBy);
+        leftLayout.addComponents(establishmentNameLabel, establishmentAddress, establishmentCity, establishmentProvince, establishmentRating
+        , phoneNumber, establishmentsNearBy, otherNearBy);
 
         VerticalLayout rightLayout = new VerticalLayout();
 
@@ -190,6 +206,40 @@ public class MainView extends UI
             }
         }
         return null;
+    }
+
+    private Establishment getEstablishmentInformation(Establishment establishment)
+    {
+        String url = "https://api.yelp.com/v3/businesses/search";
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        headers.setBearerAuth("cdsBCLbuVL_cTXRcQqMGJV3BLJNP2pWpNme0l_BBvk02UHB-48fehnCuX5BxCh3Z-9CCbFIpZOTydzurdvDYvTiRDep0kkyXdDGjRv_ZrSQKkBtbCTkJ5PJ2TP-QXHYx");
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+                .queryParam("term", establishment.getEstablishment())
+                .queryParam("location", establishment.getCityTown())
+                .queryParam("limit", 1);
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        System.out.println("URL: " + builder.toUriString());
+
+        ResponseEntity response = restTemplate.exchange(builder.build().toString(), HttpMethod.GET, entity, String.class);
+        JsonObject json = JsonObject.fromJson(response.getBody().toString());
+        JsonObject business = (JsonObject) json.getArray("businesses").get(0);
+
+        String phoneNumber = business.getString("phone");
+        String id = business.getString("id");
+        String rating = business.getDouble("rating").toString();
+
+        establishment.setRating(rating);
+        establishment.setPhoneNumber(phoneNumber);
+        establishment.setId(id);
+        return establishment;
     }
 
 

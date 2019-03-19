@@ -7,6 +7,9 @@ import org.springframework.data.couchbase.core.mapping.Document;
 @Document
 public class Establishment
 {
+    @Field(value = "id")
+    private String id;
+
     @Field(value = "city_town")
     private String cityTown;
 
@@ -30,6 +33,12 @@ public class Establishment
 
     @Field(value = "location")
     private Location location;
+
+    @Field(value = "rating")
+    private String rating;
+
+    @Field(value = "phone_number")
+    private String phoneNumber;
 
 
     public Establishment(String cityTown, String establishment, String licenseNumber, String licenseType, String postalCode, String streetAddress, String province)
@@ -55,9 +64,39 @@ public class Establishment
         return new LatLon(lat, lng);
     }
 
+    public String getId()
+    {
+        return id;
+    }
+
+    public void setId(String id)
+    {
+        this.id = id;
+    }
+
     public Location getLocation()
     {
         return location;
+    }
+
+    public String getRating()
+    {
+        return rating;
+    }
+
+    public void setRating(String rating)
+    {
+        this.rating = rating;
+    }
+
+    public String getPhoneNumber()
+    {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber)
+    {
+        this.phoneNumber = phoneNumber;
     }
 
     public void setLocation(Location location)
