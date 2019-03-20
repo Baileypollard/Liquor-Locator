@@ -26,4 +26,10 @@
     <inherits name="com.vaadin.tapio.googlemaps.Widgetset" />
 
     <inherits name="com.vaadin.DefaultWidgetSet" />
+
+    <inherits name="org.vaadin.addons.searchbox.Widgetset" />
+
+    <inherits name="org.vaadin.addons.autocomplete.Widgetset" />
+
+    <inherits name="org.vaadin.alump.labelbutton.WidgetSet" />
 </module>

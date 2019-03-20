@@ -2,6 +2,9 @@ package com.liqourlocator.Liquor.Locator.ui;
 
 import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
+import com.github.appreciated.app.layout.AppLayout;
+import com.github.appreciated.app.layout.behaviour.AppLayoutComponent;
+import com.github.appreciated.app.layout.behaviour.Behaviour;
 import com.liqourlocator.Liquor.Locator.model.Establishment;
 import com.liqourlocator.Liquor.Locator.model.EstablishmentType;
 import com.liqourlocator.Liquor.Locator.model.Review;
@@ -30,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Theme("valo")
+@Theme("customtheme")
 @Widgetset(value = "com.vaadin.tapio.googlemaps.demo.DemoWidgetset")
 @SpringUI(path = "/")
 public class MainView extends UI
@@ -52,7 +55,6 @@ public class MainView extends UI
     {
         VerticalLayout mainLayout = new VerticalLayout();
         mainLayout.setSizeFull();
-
         SearchBox searchBox = new SearchBox("Search", SearchBox.ButtonPosition.LEFT);
         searchBox.addSearchListener(searchEvent ->
                 {
@@ -99,6 +101,20 @@ public class MainView extends UI
         setContent(mainLayout);
     }
 
+//    private CssLayout createTopHeader()
+//    {
+//        CssLayout topHeader = new CssLayout();
+//        topHeader.setStyleName("customtheme");
+//        topHeader.setWidth("100%");
+//        topHeader.setHeight("50px");
+//
+//        Label label = new Label("Liquor Locator");
+//        label.setStyleName("backColorBlue");
+//        topHeader.addComponent(label);
+//
+//        return topHeader;
+//    }
+
 
     private void displayEstablishments(List<Establishment> establishments)
     {
@@ -134,7 +150,7 @@ public class MainView extends UI
                 {
                     Establishment newEstablishment = getEstablishmentInformation(clickedEstablishment);
 
-                    VerticalLayout layout = createWindowUI(newEstablishment);
+                    VerticalLayout layout = createWindowUI(newEstablishment, establishments.size());
 
                     CreateWindowWithLayout window = new CreateWindowWithLayout(layout);
                     window.setDraggable(true);
@@ -159,7 +175,7 @@ public class MainView extends UI
         });
     }
 
-    private VerticalLayout createWindowUI(Establishment establishment)
+    private VerticalLayout createWindowUI(Establishment establishment, int size)
     {
         HorizontalLayout topLayout = new HorizontalLayout();
 
@@ -173,8 +189,8 @@ public class MainView extends UI
         Label establishmentProvince = new Label("Province: " + establishment.getProvince());
         Label establishmentRating = new Label("Average Rating: " + establishment.getRating());
         Label phoneNumber = new Label("Phone Number: " + establishment.getPhoneNumber());
-        Label establishmentsNearBy = new Label("Total Establishments Nearby: ");
-        Label otherNearBy = new Label("Other Bars Nearby: ");
+        Label establishmentsNearBy = new Label("Total Establishments Nearby: " + size);
+        Label otherNearBy = new Label("Other " + establishment.getLicenseType() + " Nearby: N/A");
 
         leftLayout.addComponents(establishmentNameLabel, establishmentAddress, establishmentCity, establishmentProvince, establishmentRating
         , phoneNumber, establishmentsNearBy, otherNearBy);

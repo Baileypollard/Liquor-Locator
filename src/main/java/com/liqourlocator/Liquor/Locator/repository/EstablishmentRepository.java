@@ -11,10 +11,10 @@ import java.util.List;
 public interface EstablishmentRepository extends CouchbasePagingAndSortingRepository<Establishment, String>
 {
     @Query("SELECT b.*, META(b).id as _ID, META(b).cas as _CAS from #{#n1ql.bucket} as b WHERE city_town=$1 AND " +
-            "license_type=$2")
+            "license_type=$2 ORDER BY establishment ASC")
     List<Establishment> findEstablishmentsByTownAndType(String town, String type);
 
-    @Query("SELECT b.*, META(b).id as _ID, META(b).cas as _CAS from #{#n1ql.bucket} as b WHERE city_town=$1")
+    @Query("SELECT b.*, META(b).id as _ID, META(b).cas as _CAS from #{#n1ql.bucket} as b WHERE city_town=$1 ORDER BY establishment ASC")
     List<Establishment> findEstablishmentsByTown(String town);
 
 }
