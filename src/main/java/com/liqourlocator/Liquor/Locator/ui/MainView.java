@@ -1,8 +1,10 @@
 package com.liqourlocator.Liquor.Locator.ui;
 
+import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.liqourlocator.Liquor.Locator.model.Establishment;
 import com.liqourlocator.Liquor.Locator.model.EstablishmentType;
+import com.liqourlocator.Liquor.Locator.model.Review;
 import com.liqourlocator.Liquor.Locator.repository.EstablishmentRepository;
 import com.liqourlocator.Liquor.Locator.repository.EstablishmentTypeRepository;
 import com.vaadin.annotations.Theme;
@@ -10,11 +12,13 @@ import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.shared.ui.grid.HeightMode;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.LatLon;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import elemental.json.JsonException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,7 +29,9 @@ import org.vaadin.alump.labelbutton.LabelButton;
 import org.vaadin.alump.labelbutton.LabelButtonStyles;
 
 import javax.servlet.annotation.WebServlet;
+import javax.xml.transform.Result;
 import javax.xml.ws.Response;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -134,7 +140,7 @@ public class MainView extends UI
                 {
                     Establishment newEstablishment = getEstablishmentInformation(clickedEstablishment);
 
-                    HorizontalLayout layout = createWindowUI(newEstablishment);
+                    VerticalLayout layout = createWindowUI(newEstablishment);
 
                     CreateWindowWithLayout window = new CreateWindowWithLayout(layout);
                     window.setDraggable(true);
@@ -159,10 +165,9 @@ public class MainView extends UI
         });
     }
 
-    private HorizontalLayout createWindowUI(Establishment establishment)
+    private VerticalLayout createWindowUI(Establishment establishment)
     {
-        HorizontalLayout mainLayout = new HorizontalLayout();
-        mainLayout.setSizeFull();
+        HorizontalLayout topLayout = new HorizontalLayout();
 
         VerticalLayout leftLayout = new VerticalLayout();
 
@@ -183,18 +188,128 @@ public class MainView extends UI
         VerticalLayout rightLayout = new VerticalLayout();
 
         GoogleMap map = new GoogleMap(apiKey, null, "english");
-        map.setWidth("500px");
-        map.setHeight("500px");
+        map.setMapType(GoogleMap.MapType.Satellite);
+
+        map.setWidth("300px");
+        map.setHeight("300px");
         map.addMarker(establishment.getEstablishment(), establishment.getLatLong(), false, null);
         map.setCenter(establishment.getLatLong());
         map.setZoom(15);
 
         rightLayout.addComponent(map);
 
-        mainLayout.addComponents(leftLayout, rightLayout);
+        topLayout.addComponents(leftLayout, rightLayout);
+
+        VerticalLayout mainLayout = new VerticalLayout();
+        mainLayout.setWidth("100%");
+
+        Grid<Review> reviewGrid = new Grid<>("Reviews");
+        reviewGrid.setHeightMode(HeightMode.UNDEFINED);
+        reviewGrid.setWidth("100%");
+        reviewGrid.addColumn(Review::getAuthor).setCaption("Author");
+        reviewGrid.addColumn(Review::getRating).setCaption("Rating");
+        reviewGrid.addColumn(Review::getComment).setCaption("Comment");
+        reviewGrid.addColumn(Review::getTimeCreated).setCaption("Date");
+
+        reviewGrid.setItems(establishment.getReviews());
+
+        mainLayout.addComponents(topLayout, reviewGrid);
 
         return mainLayout;
     }
+
+    private Establishment getEstablishmentInformation(Establishment establishment)
+    {
+        String url = "https://api.yelp.com/v3/businesses/search";
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        headers.setBearerAuth("cdsBCLbuVL_cTXRcQqMGJV3BLJNP2pWpNme0l_BBvk02UHB-48fehnCuX5BxCh3Z" +
+                "-9CCbFIpZOTydzurdvDYvTiRDep0kkyXdDGjRv_ZrSQKkBtbCTkJ5PJ2TP-QXHYx");
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
+                .queryParam("term", establishment.getEstablishment())
+                .queryParam("location", establishment.getCityTown())
+                .queryParam("limit", 1);
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity response = restTemplate.exchange(builder.build().toString(), HttpMethod.GET, entity, String.class);
+
+        try
+        {
+            JsonObject json = JsonObject.fromJson(response.getBody().toString());
+            JsonArray businessArray = json.getArray("businesses");
+
+            if (businessArray.size() > 0)
+            {
+                JsonObject business = (JsonObject) json.getArray("businesses").get(0);
+
+                String phoneNumber = business.getString("phone");
+                String id = business.getString("id");
+                String rating = business.getDouble("rating").toString();
+
+                establishment.setRating(rating);
+                establishment.setPhoneNumber(phoneNumber);
+                establishment.setId(id);
+
+                return getReviewsForEstablishment(establishment);
+            }
+        }
+        catch (JsonException e)
+        {
+            System.out.println("Exception: " + e.getLocalizedMessage());
+        }
+
+        return establishment;
+    }
+
+
+    private Establishment getReviewsForEstablishment(Establishment establishment)
+    {
+        List<Review> reviewList = new ArrayList<>();
+
+        String url = "https://api.yelp.com/v3/businesses/" + establishment.getId() + "/reviews";
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        headers.setBearerAuth("cdsBCLbuVL_cTXRcQqMGJV3BLJNP2pWpNme0l_BBvk02UHB-48fehnCuX5BxCh3Z" +
+                "-9CCbFIpZOTydzurdvDYvTiRDep0kkyXdDGjRv_ZrSQKkBtbCTkJ5PJ2TP-QXHYx");
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+        JsonObject json = JsonObject.fromJson(response.getBody().toString());
+
+        JsonArray reviewArray = json.getArray("reviews");
+
+        reviewArray.forEach(review -> {
+            JsonObject reviewObject = (JsonObject) review;
+            JsonObject userObject = reviewObject.getObject("user");
+            String username = userObject.getString("name");
+            String reviewText = reviewObject.getString("text");
+            String rating = reviewObject.getDouble("rating").toString();
+            String timeCreated = reviewObject.getString("time_created");
+            String reviewUrl = reviewObject.getString("url");
+
+            Review newReview = new Review(reviewText, rating, timeCreated, reviewUrl, username);
+
+            reviewList.add(newReview);
+
+        });
+
+        establishment.setReviews(reviewList);
+
+        return establishment;
+    }
+
 
     private Establishment findClickedEstablishment(final List<Establishment> list, final String clickedEstablishment)
     {
@@ -207,41 +322,6 @@ public class MainView extends UI
         }
         return null;
     }
-
-    private Establishment getEstablishmentInformation(Establishment establishment)
-    {
-        String url = "https://api.yelp.com/v3/businesses/search";
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED));
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        headers.setBearerAuth("cdsBCLbuVL_cTXRcQqMGJV3BLJNP2pWpNme0l_BBvk02UHB-48fehnCuX5BxCh3Z-9CCbFIpZOTydzurdvDYvTiRDep0kkyXdDGjRv_ZrSQKkBtbCTkJ5PJ2TP-QXHYx");
-
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
-                .queryParam("term", establishment.getEstablishment())
-                .queryParam("location", establishment.getCityTown())
-                .queryParam("limit", 1);
-
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-
-        System.out.println("URL: " + builder.toUriString());
-
-        ResponseEntity response = restTemplate.exchange(builder.build().toString(), HttpMethod.GET, entity, String.class);
-        JsonObject json = JsonObject.fromJson(response.getBody().toString());
-        JsonObject business = (JsonObject) json.getArray("businesses").get(0);
-
-        String phoneNumber = business.getString("phone");
-        String id = business.getString("id");
-        String rating = business.getDouble("rating").toString();
-
-        establishment.setRating(rating);
-        establishment.setPhoneNumber(phoneNumber);
-        establishment.setId(id);
-        return establishment;
-    }
-
 
     @WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)
     @VaadinServletConfiguration(ui = MainView.class, productionMode = false, widgetset = "com.vaadin.tapio.googlemaps.demo.DemoWidgetset")

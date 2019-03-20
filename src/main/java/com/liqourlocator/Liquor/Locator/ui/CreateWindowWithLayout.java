@@ -7,9 +7,9 @@ import com.vaadin.ui.Window;
 
 public class CreateWindowWithLayout extends Window
 {
-    private HorizontalLayout layout;
+    private VerticalLayout layout;
 
-    public CreateWindowWithLayout(HorizontalLayout layout)
+    public CreateWindowWithLayout(VerticalLayout layout)
     {
         super("Establishment Information");
         this.layout = layout;

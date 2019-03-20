@@ -4,6 +4,9 @@ import com.couchbase.client.java.repository.annotation.Field;
 import com.vaadin.tapio.googlemaps.client.LatLon;
 import org.springframework.data.couchbase.core.mapping.Document;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Document
 public class Establishment
 {
@@ -40,6 +43,9 @@ public class Establishment
     @Field(value = "phone_number")
     private String phoneNumber;
 
+    @Field(value = "reviews")
+    private List<Review> reviews;
+
 
     public Establishment(String cityTown, String establishment, String licenseNumber, String licenseType, String postalCode, String streetAddress, String province)
     {
@@ -50,6 +56,17 @@ public class Establishment
         this.postalCode = postalCode;
         this.streetAddress = streetAddress;
         this.province = province;
+        this.reviews = new ArrayList<>();
+    }
+
+    public List<Review> getReviews()
+    {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews)
+    {
+        this.reviews = reviews;
     }
 
     public LatLon getLatLong()
@@ -81,7 +98,7 @@ public class Establishment
 
     public String getRating()
     {
-        return rating;
+        return rating != null ? rating : "Not Found";
     }
 
     public void setRating(String rating)
@@ -91,7 +108,7 @@ public class Establishment
 
     public String getPhoneNumber()
     {
-        return phoneNumber;
+        return phoneNumber != null ? phoneNumber : "Not Found";
     }
 
     public void setPhoneNumber(String phoneNumber)
@@ -106,12 +123,12 @@ public class Establishment
 
     public String getCityTown()
     {
-        return cityTown;
+        return cityTown != null ? cityTown : "Not Found";
     }
 
     public String getProvince()
     {
-        return province;
+        return province != null ? province : "Not Found";
     }
 
     public void setProvince(String province)
@@ -126,7 +143,7 @@ public class Establishment
 
     public String getEstablishment()
     {
-        return establishment;
+        return establishment != null ? establishment : "Not Found";
     }
 
     public void setEstablishment(String establishment)
@@ -166,7 +183,7 @@ public class Establishment
 
     public String getStreetAddress()
     {
-        return streetAddress;
+        return streetAddress != null ? streetAddress : "Not Found";
     }
 
     public void setStreetAddress(String streetAddress)
