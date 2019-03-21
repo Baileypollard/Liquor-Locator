@@ -5,4 +5,23 @@
 
 .customtheme {
   @include customtheme;
+
+  .v-image {
+    margin-top: 17px;
+    margin-bottom: 8px;
+  }
+
+  .v-label {
+    color: white;
+    font-size: 30px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-left: 10px;
+  }
+  .backColorBlue {
+    background-color: #1b87e3;
+  }
+
+
+
 }

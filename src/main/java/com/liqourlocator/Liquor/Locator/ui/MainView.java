@@ -10,7 +10,9 @@ import com.liqourlocator.Liquor.Locator.repository.EstablishmentRepository;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.annotations.Widgetset;
+import com.vaadin.server.ThemeResource;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.shared.ui.grid.HeightMode;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.spring.server.SpringVaadinServlet;
@@ -53,6 +55,7 @@ public class MainView extends UI
 
         VerticalLayout mainLayout = new VerticalLayout();
         mainLayout.setSizeFull();
+
         SearchBox searchBox = new SearchBox("Search", SearchBox.ButtonPosition.LEFT);
 
         searchBox.setSuggestionGenerator(this::setSuggestCity);
@@ -94,27 +97,41 @@ public class MainView extends UI
         List<EstablishmentType> types = establishmentRepository.findAllEstablishmentTypes();
         typesComboBox.setItems(types);
 
-        mainLayout.addComponents(searchBox, typesComboBox, mapLayout);
-        mainLayout.setComponentAlignment(searchBox, Alignment.TOP_LEFT);
+        VerticalLayout bottomLayout = new VerticalLayout();
+        bottomLayout.setSizeFull();
+        bottomLayout.setMargin(true);
+        bottomLayout.addComponents(searchBox, typesComboBox, mapLayout);
+        bottomLayout.setComponentAlignment(searchBox, Alignment.TOP_LEFT);
+        bottomLayout.setExpandRatio(mapLayout, 1.5f);
 
-        mainLayout.setExpandRatio(mapLayout, 1.0f);
+        mainLayout.addComponents(createTopHeader(), bottomLayout);
+        mainLayout.setMargin(false);
+        mainLayout.setExpandRatio(bottomLayout, 1.0f);
 
         setContent(mainLayout);
     }
 
-//    private CssLayout createTopHeader()
-//    {
-//        CssLayout topHeader = new CssLayout();
-//        topHeader.setStyleName("customtheme");
-//        topHeader.setWidth("100%");
-//        topHeader.setHeight("50px");
-//
-//        Label label = new Label("Liquor Locator");
-//        label.setStyleName("backColorBlue");
-//        topHeader.addComponent(label);
-//
-//        return topHeader;
-//    }
+    private HorizontalLayout createTopHeader()
+    {
+        HorizontalLayout topHeader = new HorizontalLayout();
+
+        topHeader.setStyleName("backColorBlue");
+        topHeader.setWidth("100%");
+        topHeader.setHeightUndefined();
+
+        topHeader.setMargin(false);
+        Label label = new Label("Liquor Locator");
+        label.addStyleName("v-label");
+
+        Image image = new Image(null, new ThemeResource("favicon.ico"));
+        image.addStyleName("v-image");
+        image.setWidth("30px");
+        image.setHeight("30px");
+
+        topHeader.addComponents(label, image);
+        topHeader.setExpandRatio(image, 1.5f);
+        return topHeader;
+    }
 
     private List<String> setSuggestCity(String query, int limit)
     {
