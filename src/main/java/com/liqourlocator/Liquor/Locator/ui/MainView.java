@@ -2,19 +2,15 @@ package com.liqourlocator.Liquor.Locator.ui;
 
 import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
-import com.github.appreciated.app.layout.AppLayout;
-import com.github.appreciated.app.layout.behaviour.AppLayoutComponent;
-import com.github.appreciated.app.layout.behaviour.Behaviour;
+import com.liqourlocator.Liquor.Locator.model.City;
 import com.liqourlocator.Liquor.Locator.model.Establishment;
 import com.liqourlocator.Liquor.Locator.model.EstablishmentType;
 import com.liqourlocator.Liquor.Locator.model.Review;
 import com.liqourlocator.Liquor.Locator.repository.EstablishmentRepository;
-import com.liqourlocator.Liquor.Locator.repository.EstablishmentTypeRepository;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.server.VaadinServlet;
 import com.vaadin.shared.ui.grid.HeightMode;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.spring.server.SpringVaadinServlet;
@@ -33,6 +29,7 @@ import javax.servlet.annotation.WebServlet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Theme("customtheme")
 @Widgetset(value = "com.vaadin.tapio.googlemaps.demo.DemoWidgetset")
@@ -42,21 +39,24 @@ public class MainView extends UI
     @Autowired
     private EstablishmentRepository establishmentRepository;
 
-    @Autowired
-    private EstablishmentTypeRepository establishmentTypeRepository;
-
     private ComboBox<EstablishmentType> typesComboBox;
     private String apiKey = "AIzaSyA0HS0GBYbxEbdXhzsP7sUnk2MDT7j3XFw";
     private List<Establishment> establishments;
     private VerticalLayout panelLayout;
     private GoogleMap googleMap;
+    private List<City> distinctCities;
 
     @Override
     protected void init(VaadinRequest vaadinRequest)
     {
+        distinctCities = establishmentRepository.getDistinctCityNames();
+
         VerticalLayout mainLayout = new VerticalLayout();
         mainLayout.setSizeFull();
         SearchBox searchBox = new SearchBox("Search", SearchBox.ButtonPosition.LEFT);
+
+        searchBox.setSuggestionGenerator(this::setSuggestCity);
+
         searchBox.addSearchListener(searchEvent ->
                 {
                     if (typesComboBox.isEmpty())
@@ -91,7 +91,7 @@ public class MainView extends UI
         mapLayout.setExpandRatio(closeEstablishmentsPanel, 0.2f);
 
         typesComboBox = new ComboBox<>("License Type: ");
-        List<EstablishmentType> types = establishmentTypeRepository.findAllEstablishmentTypes();
+        List<EstablishmentType> types = establishmentRepository.findAllEstablishmentTypes();
         typesComboBox.setItems(types);
 
         mainLayout.addComponents(searchBox, typesComboBox, mapLayout);
@@ -116,6 +116,12 @@ public class MainView extends UI
 //        return topHeader;
 //    }
 
+    private List<String> setSuggestCity(String query, int limit)
+    {
+        return distinctCities.stream().map(City::getCityName)
+                .filter(p -> p.contains(query)).limit(3)
+                .collect(Collectors.toList());
+    }
 
     private void displayEstablishments(List<Establishment> establishments)
     {

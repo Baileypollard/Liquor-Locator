@@ -13,7 +13,9 @@ public class LiquorLocatorApplication extends SpringBootServletInitializer
 	{
 		SpringApplication.run(LiquorLocatorApplication.class, args);
 	}
+
 	private static Class<LiquorLocatorApplication> applicationClass = LiquorLocatorApplication.class;
+
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application)
 	{
