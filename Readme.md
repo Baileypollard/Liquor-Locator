@@ -9,4 +9,4 @@ Once a search has been entered, the list on the right hand side of the screen wi
 
 
 # How To Run
-Just click this link: http://35.231.16.79:8080/Liquor-Locator/
+Just click this link: http://34.73.21.218:8080/Liquor-Locator/
