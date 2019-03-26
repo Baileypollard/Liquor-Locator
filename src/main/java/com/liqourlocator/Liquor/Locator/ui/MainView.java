@@ -7,6 +7,7 @@ import com.liqourlocator.Liquor.Locator.model.Establishment;
 import com.liqourlocator.Liquor.Locator.model.EstablishmentType;
 import com.liqourlocator.Liquor.Locator.model.Review;
 import com.liqourlocator.Liquor.Locator.repository.EstablishmentRepository;
+import com.vaadin.annotations.StyleSheet;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.annotations.Widgetset;
@@ -57,7 +58,7 @@ public class MainView extends UI
         mainLayout.setSizeFull();
 
         SearchBox searchBox = new SearchBox("Search", SearchBox.ButtonPosition.LEFT);
-
+        searchBox.setCaption("City/Town: ");
         searchBox.setSuggestionGenerator(this::setSuggestCity);
 
         searchBox.addSearchListener(searchEvent ->
@@ -83,26 +84,38 @@ public class MainView extends UI
         googleMap.setCenter(new LatLon(44.6488, -63.5752));
 
         panelLayout = new VerticalLayout();
+        panelLayout.setWidthUndefined();
 
         Panel closeEstablishmentsPanel = new Panel("Found Establishments");
         closeEstablishmentsPanel.setStyleName(ValoTheme.PANEL_WELL);
         closeEstablishmentsPanel.setContent(panelLayout);
+
         closeEstablishmentsPanel.setSizeFull();
 
         mapLayout.addComponents(googleMap, closeEstablishmentsPanel);
         mapLayout.setExpandRatio(googleMap, 1.0f);
-        mapLayout.setExpandRatio(closeEstablishmentsPanel, 0.2f);
-
+        mapLayout.setExpandRatio(closeEstablishmentsPanel, 0.3f);
         typesComboBox = new ComboBox<>("License Type: ");
-        List<EstablishmentType> types = establishmentRepository.findAllEstablishmentTypes();
-        typesComboBox.setItems(types);
+        typesComboBox.setItems(establishmentRepository.findAllEstablishmentTypes());
+        typesComboBox.setWidth("100%");
 
-        VerticalLayout bottomLayout = new VerticalLayout();
+        FormLayout searchFormLayout = new FormLayout();
+        Panel searchLayoutPanel = new Panel("Search Options");
+
+        searchFormLayout.setWidthUndefined();
+        searchLayoutPanel.setWidthUndefined();
+
+        searchFormLayout.setMargin(true);
+        searchFormLayout.setSpacing(true);
+
+        searchFormLayout.addComponents(searchBox, typesComboBox);
+        searchLayoutPanel.setContent(searchFormLayout);
+
+        HorizontalLayout bottomLayout = new HorizontalLayout();
         bottomLayout.setSizeFull();
         bottomLayout.setMargin(true);
-        bottomLayout.addComponents(searchBox, typesComboBox, mapLayout);
-        bottomLayout.setComponentAlignment(searchBox, Alignment.TOP_LEFT);
-        bottomLayout.setExpandRatio(mapLayout, 1.5f);
+        bottomLayout.addComponents(searchLayoutPanel, mapLayout);
+        bottomLayout.setExpandRatio(mapLayout, .7f);
 
         mainLayout.addComponents(createTopHeader(), bottomLayout);
         mainLayout.setMargin(false);
@@ -121,10 +134,11 @@ public class MainView extends UI
 
         topHeader.setMargin(false);
         Label label = new Label("Liquor Locator");
-        label.addStyleName("v-label");
+        label.addStyleName("headerFont");
 
         Image image = new Image(null, new ThemeResource("favicon.ico"));
         image.addStyleName("v-image");
+
         image.setWidth("30px");
         image.setHeight("30px");
 
