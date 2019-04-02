@@ -3,5 +3,10 @@ Liquor Locator is a website designed specifically for locating establishments wh
 
 Once a search has been entered, the list on the right hand side of the screen will be populated with any results matching the search constraints. The user can then select any of these results and a pop up window will display more information about the selected establishment.
 
+
+# UI
+<img width="952" alt="UI" src="https://user-images.githubusercontent.com/45129610/55025399-a1a8b400-4fdf-11e9-8d26-36423ae9d374.png">
+
+
 # How To Run
-Just click this link: http://35.231.16.79:8080/Liquor-Locator/
+Just click this link: http://34.73.21.218:8080/Liquor-Locator/
