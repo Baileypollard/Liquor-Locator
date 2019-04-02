@@ -27,12 +27,17 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.vaadin.addons.searchbox.SearchBox;
+import com.vaadin.data.HasValue.ValueChangeEvent;
+import com.vaadin.data.HasValue.ValueChangeListener;
+
 
 import javax.servlet.annotation.WebServlet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.*;
+
 
 @Theme("customtheme")
 @Widgetset(value = "com.vaadin.tapio.googlemaps.demo.DemoWidgetset")
@@ -48,16 +53,31 @@ public class MainView extends UI
     private VerticalLayout panelLayout;
     private GoogleMap googleMap;
     private List<City> distinctCities;
+    private String[] themes = {"customtheme","darkmode"};
 
     @Override
     protected void init(VaadinRequest vaadinRequest)
     {
+        ComboBox themePicker = new ComboBox("Theme", Arrays.asList(themes));
+        themePicker.setValue(getTheme());
+        themePicker.addStyleName("my-button");
+        themePicker.setEmptySelectionAllowed(false);
+
+        themePicker.addValueChangeListener(new ValueChangeListener() {
+            @Override
+            public void valueChange(ValueChangeEvent event) {
+                String theme = (String) event.getValue();
+                setTheme(theme);
+            }
+        });
+
         distinctCities = establishmentRepository.getDistinctCityNames();
 
         VerticalLayout mainLayout = new VerticalLayout();
         mainLayout.setSizeFull();
 
         SearchBox searchBox = new SearchBox("Search", SearchBox.ButtonPosition.LEFT);
+        searchBox.getSearchButton().addStyleName("but");
         searchBox.setCaption("City/Town: ");
         searchBox.setSuggestionGenerator(this::setSuggestCity);
 
@@ -87,7 +107,8 @@ public class MainView extends UI
         panelLayout.setWidthUndefined();
 
         Panel closeEstablishmentsPanel = new Panel("Found Establishments");
-        closeEstablishmentsPanel.setStyleName(ValoTheme.PANEL_WELL);
+        closeEstablishmentsPanel.addStyleName("customStyle");
+        //closeEstablishmentsPanel.setStyleName(ValoTheme.PANEL_WELL);
         closeEstablishmentsPanel.setContent(panelLayout);
 
         closeEstablishmentsPanel.setSizeFull();
@@ -96,11 +117,13 @@ public class MainView extends UI
         mapLayout.setExpandRatio(googleMap, 1.0f);
         mapLayout.setExpandRatio(closeEstablishmentsPanel, 0.3f);
         typesComboBox = new ComboBox<>("License Type: ");
+        typesComboBox.addStyleName("my-button");
         typesComboBox.setItems(establishmentRepository.findAllEstablishmentTypes());
         typesComboBox.setWidth("100%");
 
         FormLayout searchFormLayout = new FormLayout();
         Panel searchLayoutPanel = new Panel("Search Options");
+        searchLayoutPanel.addStyleName("customStyle");
 
         searchFormLayout.setWidthUndefined();
         searchLayoutPanel.setWidthUndefined();
@@ -108,7 +131,7 @@ public class MainView extends UI
         searchFormLayout.setMargin(true);
         searchFormLayout.setSpacing(true);
 
-        searchFormLayout.addComponents(searchBox, typesComboBox);
+        searchFormLayout.addComponents(searchBox, typesComboBox,themePicker);
         searchLayoutPanel.setContent(searchFormLayout);
 
         HorizontalLayout bottomLayout = new HorizontalLayout();
@@ -231,7 +254,7 @@ public class MainView extends UI
         Label otherNearBy = new Label("Other " + establishment.getLicenseType() + " Nearby: N/A");
 
         leftLayout.addComponents(establishmentNameLabel, establishmentAddress, establishmentCity, establishmentProvince, establishmentRating
-        , phoneNumber, establishmentsNearBy, otherNearBy);
+                , phoneNumber, establishmentsNearBy, otherNearBy);
 
         VerticalLayout rightLayout = new VerticalLayout();
 

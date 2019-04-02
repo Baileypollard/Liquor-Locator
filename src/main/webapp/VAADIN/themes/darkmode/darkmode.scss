@@ -1,0 +1,9 @@
+$v-background-color:hsla(199, 13%, 14%, 1);
+$v-font-color: #464440;
+
+@import "../valo/valo.scss";
+
+@mixin darkmode {
+  @include valo;
+
+}

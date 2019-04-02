@@ -1,42 +1,8 @@
-@import "customtheme";
+
+
 @import "darkmode";
 // This file prefixes all rules with the theme name to avoid causing conflicts with other themes.
 // The actual styles should be defined in mytheme.scss
-
-.customtheme {
-  @include customtheme;
-
-  .v-image {
-    margin-top: 17px;
-    margin-bottom: 8px;
-  }
-
-  .backColorBlue {
-    background-color: #1b87e3;
-  }
-
-  .headerFont {
-    color: white;
-    font-size: 30px;
-    margin-top: 8px;
-    margin-bottom: 8px;
-    margin-left: 10px;
-  }
-
-  .v-panel-caption-customStyle {
-    background: #1b87e3; 
-    color: white; 
-  }
-  .my-button .v-filterselect-button {
-    background: #1b87e3; 
-    color: white; 
-  }
-  .v-button-but {
-      @include valo-button-style($background-color: #1b87e3, $font-color: white);
-
-  }
-
-}
 
 .darkmode {
   @include darkmode;
@@ -47,7 +13,7 @@
   }
 
   .backColorBlue {
-    background-color: black;
+    background-color: #1b87e3;
   }
 
   .headerFont {
